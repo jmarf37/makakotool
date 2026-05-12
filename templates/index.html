@@ -12,16 +12,21 @@
     body {
       background-color: #f4f6f9;
     }
+
     .main-card {
       border-radius: 12px;
       box-shadow: 0 4px 18px rgba(0,0,0,0.05);
     }
+
     .result-card {
       border-radius: 12px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
+
     .header-logo {
-      max-height: 200px;
+      width: 80px;
+      height: auto;
+      object-fit: contain;
     }
   </style>
 </head>
@@ -31,9 +36,9 @@
 <div class="container py-5">
 
   <!-- HEADER -->
- <div class="d-flex align-items-center mb-4">
+  <div class="d-flex align-items-center mb-4">
     <img src="{{ url_for('static', filename='img/logo.png') }}" class="header-logo me-3" alt="Logo">
-</div>
+
     <div>
       <h1 class="mb-0 fw-bold">Análisis reputacional de IP</h1>
       <small class="text-muted">by Makako Team</small>
