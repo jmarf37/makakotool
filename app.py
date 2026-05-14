@@ -7,12 +7,9 @@ app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 
-@app.route("/debug-files")
-def debug_files():
-    files = []
-    for path in BASE_DIR.rglob("*"):
-        files.append(str(path.relative_to(BASE_DIR)))
-    return "<br>".join(files)
+@app.route("/logo.png")
+def logo():
+    return send_from_directory(BASE_DIR / "templates", "logo.png")
 
 
 def safe_call(func, ip_str):
