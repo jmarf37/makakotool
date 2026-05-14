@@ -5,11 +5,28 @@ import ip
 
 app = Flask(__name__)
 
+from pathlib import Path
+from flask import send_from_directory
+
 BASE_DIR = Path(__file__).resolve().parent
 
 @app.route("/logo.png")
 def logo():
     return send_from_directory(BASE_DIR / "templates", "logo.png")
+
+@app.route("/debug-logo")
+def debug_logo():
+    logo_path = BASE_DIR / "templates" / "logo.png"
+
+    return {
+        "base_dir": str(BASE_DIR),
+        "logo_path": str(logo_path),
+        "logo_exists": logo_path.exists(),
+        "templates_files": [
+            str(p.relative_to(BASE_DIR))
+            for p in (BASE_DIR / "templates").rglob("*")
+        ]
+    }
 
 
 def safe_call(func, ip_str):
