@@ -5,11 +5,16 @@
     {
       "src": "app.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "handle": "filesystem"
+      "src": "/img/(.*)",
+      "dest": "/public/img/$1"
     },
     {
       "src": "/(.*)",
