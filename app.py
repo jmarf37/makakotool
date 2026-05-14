@@ -1,19 +1,15 @@
 from flask import Flask, render_template, request, send_from_directory
-import os
+from pathlib import Path
 import re
 import ip
 
-app = Flask(
-    __name__,
-    template_folder="templates"
-)
+app = Flask(__name__)
+
+BASE_DIR = Path(__file__).resolve().parent
 
 @app.route("/img/<path:filename>")
 def serve_img(filename):
-    return send_from_directory(
-        os.path.join(app.root_path, "public", "img"),
-        filename
-    )
+    return send_from_directory(BASE_DIR / "public" / "img", filename)
 
 
 def safe_call(func, ip_str):
