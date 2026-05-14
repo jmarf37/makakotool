@@ -2,11 +2,7 @@ from flask import Flask, render_template, request
 import re
 import ip  # tu ip.py
 
-app = Flask(
-    __name__,
-    static_folder="static",
-    template_folder="templates"
-)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
 
 def safe_call(func, ip_str):
