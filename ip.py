@@ -583,7 +583,7 @@ def print_results_to_console(ip_address):
     rdap_data = analyze_ip_RDAP_SOC(ip_address)
     blacklist_data = analyze_ip_BLACKLIST(ip_address)
 
-    print(f"\n\nAnalisis Reputacional ------> {ip_address}\n")
+    print(f"\n\nAnálisis Reputacional ------> {ip_address}\n")
     print("-" * 106)
     print("Resultado:")
     print(f"Virustotal --> ({vt_data.get('Community Score', 'N/A')} VT)")
@@ -722,7 +722,7 @@ def format_console_report(ip_str: str, results: dict) -> str:
 
     out = []
     # Cabecera
-    out.append(f"Analisis Reputacional ------> {ip_str}")
+    out.append(f"Análisis Reputacional ------> {ip_str}")
     out.append("")
     out.append(_dashline())
     out.append("Resultado:")
