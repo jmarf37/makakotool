@@ -178,5 +178,31 @@
 
 </div>
 
+<script>
+  document.querySelectorAll(".copiar-informe").forEach((boton) => {
+    boton.addEventListener("click", async (evento) => {
+      // Copiar sin abrir ni cerrar los detalles.
+      evento.preventDefault();
+      evento.stopPropagation();
+
+      const informe = document.getElementById(boton.dataset.informe);
+      const estado = boton.parentElement.querySelector(".estado-copia");
+
+      boton.disabled = true;
+      estado.textContent = "";
+
+      try {
+        await navigator.clipboard.writeText(informe.textContent);
+        estado.textContent = "¡Copiado!";
+      } catch (error) {
+        estado.textContent =
+          "No se pudo copiar. Selecciona el texto y cópialo manualmente.";
+      } finally {
+        boton.disabled = false;
+      }
+    });
+  });
+</script>
+  
 </body>
 </html>
