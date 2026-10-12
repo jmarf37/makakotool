@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+APIKEYS.env
+.venv/
+__pycache__/
+.pytest_cache/
+instance/

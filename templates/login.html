@@ -1,0 +1,17 @@
+{% extends 'account_base.html' %}
+{% block title %}Iniciar sesión · Makako Tool{% endblock %}
+{% block content %}
+<div class="card p-4 mx-auto" style="max-width:440px">
+  <h2 class="h4 mb-3">Iniciar sesión</h2>
+  <p class="text-muted">Accede con la cuenta que te ha facilitado el administrador.</p>
+  {% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="username" class="form-label">Usuario</label>
+    <input id="username" name="username" class="form-control mb-3" required maxlength="64" autocomplete="username" autofocus>
+    <label for="password" class="form-label">Contraseña</label>
+    <input id="password" name="password" type="password" class="form-control mb-3" required maxlength="128" autocomplete="current-password">
+    <button class="btn btn-primary w-100">Entrar</button>
+  </form>
+</div>
+{% endblock %}

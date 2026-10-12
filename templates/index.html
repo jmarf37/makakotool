@@ -57,9 +57,22 @@
     </div>
   </div>
 
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-3 bg-white rounded p-3">
+    <span>Usuario: <strong>{{ g.user.username }}</strong></span>
+    {% if g.user.is_admin %}<a href="{{ url_for('accounts.admin') }}" class="btn btn-outline-primary btn-sm">Administración</a>{% endif %}
+    <form method="post" action="{{ url_for('accounts.logout') }}" class="ms-auto">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
+    </form>
+  </div>
+  {% if missing_sources %}
+  <div class="alert alert-info">Fuentes sin configurar: {{ missing_sources | join(', ') }}. El administrador debe asignar las claves a tu cuenta.</div>
+  {% endif %}
+
   <!-- FORMULARIO -->
   <div class="card main-card mb-4 p-4">
     <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-3">
         <label class="form-label fw-semibold">IPs a analizar</label>
         <textarea name="ips"

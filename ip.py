@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import ipaddress
 
 
-load_dotenv(dotenv_path='APIKEYS.env')
+load_dotenv()
 
 
 VT_API = os.getenv('VT_API')
@@ -137,12 +137,13 @@ def analyze_ip_BLACKLIST(ip_address):
     }
 
 
-def analyze_ip_VT(ip_address):
-    headers = {'x-apikey': VT_API}
+def analyze_ip_VT(ip_address, api_key=None):
+    if not api_key:
+        return {"error": "Sin configurar"}
+    headers = {'x-apikey': api_key}
     response = requests.get(f"{URL_VIRUSTOTAL}{ip_address}", headers=headers, timeout=TIMEOUT)
     if response.status_code != 200:
-        print(f"Failed to retrieve data for IP address {ip_address} from VirusTotal (HTTP {response.status_code})")
-        return {}
+        return {"error": f"VirusTotal: HTTP {response.status_code}"}
     data = response.json().get('data', {}).get('attributes', {})
     last_analysis_stats = data.get('last_analysis_stats', {})
     last_analysis_date_timestamp = data.get('last_analysis_date')
@@ -165,12 +166,11 @@ def analyze_ip_VT(ip_address):
     }
 
 
-def analyze_ip_IPQS(ip_address, strictness=1, fast=True, user_agent=None, user_language=None):
-    if not IPQ_API:
-        # opcional; si no la usas siempre, no aborta el script
-        return {}
+def analyze_ip_IPQS(ip_address, strictness=1, fast=True, user_agent=None, user_language=None, api_key=None):
+    if not api_key:
+        return {"error": "Sin configurar"}
 
-    url = f"{URL_IPQ}{IPQ_API}/{ip_address}"
+    url = f"{URL_IPQ}{api_key}/{ip_address}"
     params = {
         "strictness": strictness,
         "fast": "true" if fast else "false",
@@ -184,13 +184,13 @@ def analyze_ip_IPQS(ip_address, strictness=1, fast=True, user_agent=None, user_l
     try:
         response = requests.get(url, params=params, timeout=TIMEOUT)
         if response.status_code != 200:
-            print(f"Failed to retrieve data for IP address {ip_address} from IPQualityScore (HTTP {response.status_code})")
-            return {}
+            return {"error": f"IPQualityScore: HTTP {response.status_code}"}
         data = response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error calling IPQualityScore for {ip_address}: {e}")
-        return {}
+        return {"error": "No se pudo consultar IPQualityScore"}
 
+    if not data.get("success", True):
+        return {"error": "IPQualityScore rechazó la consulta; comprueba la clave y la cuota."}
     return {
         "Fraud Score": data.get("fraud_score"),
         "Proxy": data.get("proxy"),
@@ -205,13 +205,14 @@ def analyze_ip_IPQS(ip_address, strictness=1, fast=True, user_agent=None, user_l
     }
 
 
-def analyze_ip_ABUSE(ip_address):
+def analyze_ip_ABUSE(ip_address, api_key=None):
+    if not api_key:
+        return {"error": "Sin configurar"}
     querystring = {'ipAddress': ip_address, 'maxAgeInDays': '90'}
-    headers = {'Accept': 'application/json', 'Key': ABUSE_API}
+    headers = {'Accept': 'application/json', 'Key': api_key}
     response = requests.get(URL_ABUSEIPDB, headers=headers, params=querystring, timeout=TIMEOUT)
     if response.status_code != 200:
-        print(f"Failed to retrieve data for IP address {ip_address} from AbuseIPDB (HTTP {response.status_code})")
-        return {}
+        return {"error": f"AbuseIPDB: HTTP {response.status_code}"}
     data = response.json().get('data', {})
 
     is_whitelisted = bool(data.get('isWhitelisted'))
@@ -231,12 +232,13 @@ def analyze_ip_ABUSE(ip_address):
     }
 
 
-def analyze_ip_ALIEN(ip_address):
-    headers = {'X-OTX-API-KEY': ALIEN_API}
+def analyze_ip_ALIEN(ip_address, api_key=None):
+    if not api_key:
+        return {"error": "Sin configurar"}
+    headers = {'X-OTX-API-KEY': api_key}
     response = requests.get(f"{URL_ALIEN}{ip_address}/general", headers=headers, timeout=TIMEOUT)
     if response.status_code != 200:
-        print(f"Failed to retrieve data for IP address {ip_address} from AlienVault (HTTP {response.status_code})")
-        return {}
+        return {"error": f"AlienVault: HTTP {response.status_code}"}
     data = response.json()
     pulse_info = data.get('pulse_info', {})
     pulses = pulse_info.get('pulses', [])
@@ -532,10 +534,10 @@ def _print_contacts_bucket(title, bucket):
 
 
 def store_results_in_file(ip_address):
-    vt_data = analyze_ip_VT(ip_address)
-    abuse_data = analyze_ip_ABUSE(ip_address)
-    alien_data = analyze_ip_ALIEN(ip_address)
-    ipqs_data = analyze_ip_IPQS(ip_address)
+    vt_data = analyze_ip_VT(ip_address, api_key=VT_API)
+    abuse_data = analyze_ip_ABUSE(ip_address, api_key=ABUSE_API)
+    alien_data = analyze_ip_ALIEN(ip_address, api_key=ALIEN_API)
+    ipqs_data = analyze_ip_IPQS(ip_address, api_key=IPQ_API)
     rdap_data = analyze_ip_RDAP_SOC(ip_address)
     blacklist_data = analyze_ip_BLACKLIST(ip_address)
 
@@ -576,10 +578,10 @@ def store_results_in_file(ip_address):
 
 
 def print_results_to_console(ip_address):
-    vt_data = analyze_ip_VT(ip_address)
-    abuse_data = analyze_ip_ABUSE(ip_address)
-    alien_data = analyze_ip_ALIEN(ip_address)
-    ipqs_data = analyze_ip_IPQS(ip_address)
+    vt_data = analyze_ip_VT(ip_address, api_key=VT_API)
+    abuse_data = analyze_ip_ABUSE(ip_address, api_key=ABUSE_API)
+    alien_data = analyze_ip_ALIEN(ip_address, api_key=ALIEN_API)
+    ipqs_data = analyze_ip_IPQS(ip_address, api_key=IPQ_API)
     rdap_data = analyze_ip_RDAP_SOC(ip_address)
     blacklist_data = analyze_ip_BLACKLIST(ip_address)
 

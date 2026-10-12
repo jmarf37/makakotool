@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, send_from_directory
 from pathlib import Path
 import re
 import ip
+from accounts import init_accounts, login_required, get_keys, SOURCES
+from flask import g
+import requests
 
 app = Flask(
     __name__,
@@ -9,35 +12,20 @@ app = Flask(
     static_url_path="/static"
 )
 
-from pathlib import Path
-from flask import send_from_directory
-
 BASE_DIR = Path(__file__).resolve().parent
 
 @app.route("/logo.png")
 def logo():
     return send_from_directory(BASE_DIR / "templates", "logo.png")
 
-@app.route("/debug-logo")
-def debug_logo():
-    logo_path = BASE_DIR / "templates" / "logo.png"
 
-    return {
-        "base_dir": str(BASE_DIR),
-        "logo_path": str(logo_path),
-        "logo_exists": logo_path.exists(),
-        "templates_files": [
-            str(p.relative_to(BASE_DIR))
-            for p in (BASE_DIR / "templates").rglob("*")
-        ]
-    }
-
-
-def safe_call(func, ip_str):
+def safe_call(func, ip_str, **kwargs):
     try:
-        return func(ip_str)
-    except Exception as e:
-        return {"error": str(e)}
+        return func(ip_str, **kwargs)
+    except requests.exceptions.Timeout:
+        return {"error": "Tiempo de espera agotado"}
+    except Exception:
+        return {"error": "No se pudo consultar esta fuente"}
 
 
 def _parse_vt_score_to_int(vt):
@@ -96,11 +84,11 @@ def _to_boolish(v):
     return s in {"sí", "si", "yes", "true", "1", "y"}
 
 
-def analyze_one(ip_str):
-    vt = safe_call(ip.analyze_ip_VT, ip_str)
-    abuse = safe_call(ip.analyze_ip_ABUSE, ip_str)
-    alien = safe_call(ip.analyze_ip_ALIEN, ip_str)
-    ipqs = safe_call(ip.analyze_ip_IPQS, ip_str)
+def analyze_one(ip_str, keys):
+    vt = safe_call(ip.analyze_ip_VT, ip_str, api_key=keys.get("VT_API"))
+    abuse = safe_call(ip.analyze_ip_ABUSE, ip_str, api_key=keys.get("ABUSE_API"))
+    alien = safe_call(ip.analyze_ip_ALIEN, ip_str, api_key=keys.get("ALIEN_API"))
+    ipqs = safe_call(ip.analyze_ip_IPQS, ip_str, api_key=keys.get("IPQ_API"))
     rdap = safe_call(ip.analyze_ip_RDAP_SOC, ip_str)
     bl = safe_call(ip.analyze_ip_BLACKLIST, ip_str)
 
@@ -173,9 +161,11 @@ def analyze_one(ip_str):
 
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     results = []
     errors = []
+    keys = get_keys(g.user)
 
     if request.method == "POST":
         raw = request.form.get("ips", "") or ""
@@ -188,17 +178,24 @@ def index():
                 seen.add(c)
                 ips.append(c)
 
+        if len(ips) > 5:
+            errors.append("Introduce un máximo de 5 IP por consulta.")
+            ips = []
+
         for ip_str in ips:
             if not ip.validate_ip(ip_str):
                 errors.append("IP inválida: {}".format(ip_str))
                 continue
             try:
-                results.append(analyze_one(ip_str))
-            except Exception as e:
-                errors.append("Error analizando {}: {}".format(ip_str, e))
+                results.append(analyze_one(ip_str, keys))
+            except Exception:
+                errors.append("No se pudo completar el análisis de {}.".format(ip_str))
 
-    return render_template("index.html", results=results, errors=errors)
+    return render_template("index.html", results=results, errors=errors, missing_sources=[label for key, label in SOURCES.items() if not keys.get(key)])
+
+
+init_accounts(app)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
